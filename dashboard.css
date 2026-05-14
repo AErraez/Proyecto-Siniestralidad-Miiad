@@ -1,0 +1,234 @@
+:root {
+  --bs-primary:          #2563eb;
+  --bs-primary-rgb:      37, 99, 235;
+  --bs-body-bg:          #f0f4f8;
+  --bs-body-color:       #0f172a;
+  --bs-body-font-family: 'IBM Plex Sans', sans-serif;
+
+  --c-accent:  #2563eb;
+  --c-accent2: #0ea5e9;
+  --c-danger:  #dc2626;
+  --c-warn:    #d97706;
+  --c-ok:      #16a34a;
+  --c-muted:   #64748b;
+  --c-border:  #e2e8f0;
+  --c-surf:    #f8fafc;
+
+  --f-head: 'Rajdhani', sans-serif;
+  --f-mono: 'IBM Plex Mono', monospace;
+}
+
+body { font-size: 14px; }
+
+/* ── NAVBAR ──────────────────────────────────────────────────────────────── */
+.spo-navbar { height: 60px; }
+
+.spo-logo {
+  width: 36px; height: 36px; border-radius: 8px; font-size: 18px;
+  background: linear-gradient(135deg, var(--c-accent), var(--c-accent2));
+  display: grid; place-items: center; flex-shrink: 0;
+}
+.spo-brand {
+  font-family: var(--f-head); font-size: 19px; font-weight: 700;
+  letter-spacing: .05em; text-transform: uppercase; color: #0f172a; line-height: 1.1;
+}
+.spo-brand-sub { font-size: 10px; color: var(--c-muted); letter-spacing: .1em; text-transform: uppercase; }
+
+/* ── STICKY SIDEBAR ──────────────────────────────────────────────────────── */
+@media (min-width: 992px) {
+  .spo-sticky {
+    position: sticky;
+    top: 68px;
+  }
+}
+
+/* ── CARD OVERRIDES ──────────────────────────────────────────────────────── */
+.card {
+  background: #ffffff !important;
+  border: 1px solid var(--c-border) !important;
+  box-shadow: 0 1px 4px rgba(15,23,42,.06), 0 0 0 0 transparent !important;
+}
+
+/* ── SECTION DIVIDERS ────────────────────────────────────────────────────── */
+.spo-section {
+  font-family: var(--f-mono); font-size: 9.5px; font-weight: 600;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--c-muted);
+  padding-bottom: 8px; margin-bottom: 14px; border-bottom: 1px solid var(--c-border);
+}
+.spo-panel-title {
+  font-family: var(--f-head); font-size: 13px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--c-accent);
+  display: flex; align-items: center; gap: 8px;
+  padding-bottom: 12px; margin-bottom: 20px; border-bottom: 1px solid var(--c-border);
+}
+.spo-panel-title svg { opacity: .55; }
+
+/* ── FORM CONTROLS ───────────────────────────────────────────────────────── */
+.form-control, .form-select {
+  background: var(--c-surf); border-color: var(--c-border);
+  font-size: 13px; color: #0f172a;
+}
+.form-control:focus, .form-select:focus {
+  background: var(--c-surf); border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+.form-label { font-size: 11px; color: var(--c-muted); margin-bottom: 3px; }
+
+.slider-val {
+  font-family: var(--f-mono); font-size: 12px;
+  color: var(--c-accent); font-weight: 600;
+  background: rgba(37,99,235,.08); padding: 1px 7px; border-radius: 4px;
+}
+.form-range::-webkit-slider-thumb { background: var(--c-accent); }
+.form-range::-moz-range-thumb     { background: var(--c-accent); border: none; }
+
+/* ── TOGGLE PILLS (btn-check) ────────────────────────────────────────────── */
+.btn-check + .btn-outline-primary {
+  font-size: 11px; font-weight: 400;
+  color: var(--c-muted); border-color: var(--c-border);
+  background: #fff; padding: 4px 12px;
+}
+.btn-check + .btn-outline-primary:hover {
+  color: var(--c-accent); border-color: var(--c-accent);
+  background: rgba(37,99,235,.04);
+}
+.btn-check:checked + .btn-outline-primary {
+  color: var(--c-accent); border-color: var(--c-accent);
+  background: rgba(37,99,235,.09); box-shadow: none;
+}
+
+/* ── MAP PICKER ──────────────────────────────────────────────────────────── */
+#picker-map {
+  height: 180px; border-radius: 8px;
+  border: 1px solid var(--c-border); overflow: hidden;
+}
+.coord-row { display: flex; gap: 8px; margin-top: 8px; }
+.coord-box {
+  flex: 1; background: var(--c-surf); border: 1px solid var(--c-border);
+  border-radius: 6px; padding: 6px 10px;
+}
+.coord-box .clabel { font-size: 9px; color: var(--c-muted); text-transform: uppercase; letter-spacing: .1em; display: block; }
+.coord-box .cval   { font-family: var(--f-mono); font-size: 12px; color: var(--c-accent2); font-weight: 600; }
+
+/* ── PREDICT BUTTON ──────────────────────────────────────────────────────── */
+#btn-predict {
+  font-family: var(--f-head); font-size: 15px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; padding: 12px;
+  background: var(--c-accent); border-color: var(--c-accent);
+}
+#btn-predict:hover:not(:disabled)  { background: #1d4ed8; border-color: #1d4ed8; }
+#btn-predict:disabled              { background: var(--c-border); border-color: var(--c-border); color: var(--c-muted); }
+
+/* ── RESULT IDLE ─────────────────────────────────────────────────────────── */
+.result-idle {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 140px;
+  color: var(--c-muted); gap: 10px; font-size: 13px;
+}
+.result-idle .idle-icon { font-size: 36px; opacity: .2; }
+
+/* ── GAUGE ───────────────────────────────────────────────────────────────── */
+.gauge-wrap { width: 180px; height: 100px; flex-shrink: 0; }
+.gauge-svg  { width: 100%; height: 100%; overflow: visible; }
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.anim-up { animation: fadeUp .4s ease both; }
+
+/* ── SEVERITY BADGE ──────────────────────────────────────────────────────── */
+.severity-badge {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 10px 18px; border-radius: 8px;
+  font-family: var(--f-head); font-size: 22px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase;
+}
+.severity-badge.ok     { background:rgba(22,163,74,.08);  border:1px solid rgba(22,163,74,.2);  color:var(--c-ok);     }
+.severity-badge.warn   { background:rgba(217,119,6,.08);  border:1px solid rgba(217,119,6,.2);  color:var(--c-warn);   }
+.severity-badge.danger { background:rgba(220,38,38,.08);  border:1px solid rgba(220,38,38,.22); color:var(--c-danger); animation:alertPulse 1.5s ease-in-out infinite; }
+@keyframes alertPulse { 0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,0)} 50%{box-shadow:0 0 0 5px rgba(220,38,38,.1)} }
+
+/* ── PROBABILITY BARS ────────────────────────────────────────────────────── */
+.prob-bars       { display:flex; flex-direction:column; gap:7px; }
+.prob-bar-row    { display:flex; align-items:center; gap:8px; font-size:12px; }
+.prob-bar-label  { width:88px; color:var(--c-muted); text-align:right; font-size:11px; }
+.prob-bar-track  { flex:1; height:5px; background:var(--c-border); border-radius:3px; overflow:hidden; }
+.prob-bar-fill   { height:100%; border-radius:3px; transition:width .65s cubic-bezier(.4,0,.2,1); }
+.prob-bar-val    { width:38px; font-family:var(--f-mono); font-size:11px; color:#0f172a; }
+
+/* ── CLUSTER CHIP ────────────────────────────────────────────────────────── */
+.cluster-chip {
+  display:inline-flex; align-items:center; gap:5px; padding:3px 10px;
+  border-radius:20px; font-family:var(--f-mono); font-size:11px;
+  background:rgba(37,99,235,.07); border:1px solid rgba(37,99,235,.18); color:var(--c-accent2);
+}
+
+/* ── ACTION CARD ─────────────────────────────────────────────────────────── */
+.action-card {
+  display:flex; align-items:flex-start; gap:12px; padding:14px 16px;
+  border-radius:8px; background:var(--c-surf);
+  border-left:4px solid var(--c-accent); margin-top:18px;
+  animation:fadeUp .5s ease .1s both;
+}
+.action-card.high     { border-color:var(--c-warn);   }
+.action-card.critical { border-color:var(--c-danger); }
+.action-icon  { font-size:20px; line-height:1.2; flex-shrink:0; }
+.action-text  { font-size:13px; line-height:1.55; }
+.action-text strong { display:block; font-size:11px; color:var(--c-muted); font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-bottom:3px; }
+
+/* ── INCIDENT MAP ────────────────────────────────────────────────────────── */
+#incident-map { height:380px; border-radius:8px; border:1px solid var(--c-border); overflow:hidden; }
+
+.map-ctrl-btn {
+  font-size:11px; padding:4px 14px; cursor:pointer; transition:all .15s;
+  border:1px solid var(--c-border); border-radius:20px;
+  background:#fff; color:var(--c-muted);
+  font-family:'IBM Plex Sans',sans-serif;
+}
+.map-ctrl-btn:hover, .map-ctrl-btn.active {
+  border-color:var(--c-accent); color:var(--c-accent); background:rgba(37,99,235,.06);
+}
+.map-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+/* ── FACTOR TAGS ─────────────────────────────────────────────────────────── */
+.factor-tag {
+  display:inline-flex; align-items:center; gap:5px; padding:4px 11px;
+  border-radius:20px; font-size:11px;
+  border:1px solid var(--c-border); color:var(--c-muted); background:var(--c-surf);
+}
+.factor-tag.active { border-color:var(--c-accent); color:var(--c-accent); background:rgba(37,99,235,.06); }
+
+/* ── BAR CHART ───────────────────────────────────────────────────────────── */
+.spo-chart-label { font-size:10px; color:var(--c-muted); letter-spacing:.08em; text-transform:uppercase; margin-bottom:10px; }
+.bar-chart { display:flex; align-items:flex-end; gap:5px; height:80px; }
+.bar { width:100%; border-radius:2px 2px 0 0; min-height:2px; transition:height .5s ease; }
+.bar.fatal   { background:linear-gradient(to top,#dc2626,#f87171); }
+.bar.heridos { background:linear-gradient(to top,#d97706,#fbbf24); }
+.bar.danos   { background:linear-gradient(to top,#2563eb,#93c5fd); }
+.bar-label   { font-family:var(--f-mono); font-size:8px; color:var(--c-muted); text-align:center; margin-top:3px; }
+.legend-dot  { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+
+/* ── ACTION STEPS (heridos protocol) ────────────────────────────────────── */
+.action-steps { display:flex; flex-direction:column; gap:7px; margin-top:6px; }
+.action-step  { display:flex; align-items:flex-start; gap:9px; font-size:12px; line-height:1.55; }
+.step-num {
+  min-width:18px; height:18px; border-radius:50%;
+  background:var(--c-warn); color:#fff;
+  font-size:10px; font-weight:700; display:grid; place-items:center; flex-shrink:0; margin-top:1px;
+}
+.action-card.critical .step-num { background:var(--c-danger); }
+
+/* ── FATAL CHIP ──────────────────────────────────────────────────────────── */
+.cluster-chip.fatal-chip {
+  background:rgba(220,38,38,.06);
+  border-color:rgba(220,38,38,.2);
+  color:var(--c-danger);
+}
+
+/* ── ERROR ───────────────────────────────────────────────────────────────── */
+.error-box {
+  background:rgba(220,38,38,.05); border:1px solid rgba(220,38,38,.18);
+  border-radius:8px; padding:16px; color:#b91c1c; font-size:12px; line-height:1.65;
+}
+.error-box strong { color:var(--c-danger); display:block; margin-bottom:4px; font-size:13px; }
