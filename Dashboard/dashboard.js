@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8000';
+const API_BASE = '/api';
 const BOGOTA   = [4.6534, -74.0837];
 
 // ── SVG ICON HELPERS ──────────────────────────────────────────────────────────

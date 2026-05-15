@@ -1,0 +1,16 @@
+services:
+  api:
+    build: ./api
+    container_name: api
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  dashboard:
+    build: ./Dashboard
+    container_name: dashboard
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    restart: unless-stopped
