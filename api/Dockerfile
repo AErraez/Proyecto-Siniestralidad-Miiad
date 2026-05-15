@@ -1,5 +1,7 @@
 FROM python:3.12-slim
 
+RUN apt-get update && apt-get install -y libgomp1 && rm -rf /var/lib/apt/lists/*
+
 RUN adduser --disabled-password --gecos '' api-user
 
 WORKDIR /opt/siniestralidad-api
