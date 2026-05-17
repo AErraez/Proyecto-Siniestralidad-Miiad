@@ -4,15 +4,75 @@
 
 ```
 spo-bogota/
-├── train_model.py               ← Entrena y guarda los .pkl
-├── api.py                       ← Servidor FastAPI
-├── dashboard.html               ← Interfaz web del simulador
-├── requirements.txt             ← Dependencias Python
-├── model.pkl                    ← (generado) Modelo LightGBM
-├── kmeans.pkl                   ← (generado) Clustering espacial
-├── feature_columns.pkl          ← (generado) Orden de columnas
-└── base-anuario-de-siniestralidad-2024.xlsx  ← Datos SDM
+├── api/
+│   ├── train_model.py           ← Entrena y guarda los .pkl
+│   ├── api.py                   ← Servidor FastAPI
+│   ├── requirements.txt         ← Dependencias Python de la API
+│   ├── model.pkl                ← (DVC) Modelo LightGBM
+│   ├── kmeans.pkl               ← (DVC) Clustering espacial
+│   ├── feature_columns.pkl      ← (DVC) Orden de columnas
+│   ├── stats.json               ← (DVC) Estadísticas mensuales
+│   ├── map_data.json            ← (DVC) Datos del mapa
+│   ├── cluster_stats.json       ← (DVC) Estadísticas por clúster
+│   └── base-anuario-de-siniestralidad-2024.xlsx  ← (DVC) Datos SDM
+├── dashboard/
+│   ├── dashboard.html           ← Interfaz web del simulador
+│   ├── dashboard.js
+│   └── dashboard.css
+├── dvc.yaml                     ← Pipeline de entrenamiento (DVC)
+├── dvc.lock                     ← Estado actual del pipeline (DVC)
+└── requirements-dev.txt         ← Dependencias de desarrollo (DVC)
 ```
+
+---
+
+## Gestión de datos con DVC
+
+Los archivos grandes (Excel de datos, modelos `.pkl`, JSONs generados) **no están en git** — están versionados con [DVC](https://dvc.org) y almacenados en Google Drive.
+
+### Primer uso — clonar el proyecto y obtener los datos
+
+```bash
+# 1. Instalar dependencias de desarrollo
+pip install -r requirements-dev.txt
+
+# 2. Bajar los datos y modelos desde Google Drive (te va a pedir login Google la primera vez)
+dvc pull
+```
+
+### Actualizar los datos (nueva versión del Excel)
+
+```bash
+# Reemplazá el Excel en api/ y volvé a trackear
+dvc add api/base-anuario-de-siniestralidad-2024.xlsx
+git add api/base-anuario-de-siniestralidad-2024.xlsx.dvc
+git commit -m "actualizar datos siniestralidad 2025"
+dvc push
+```
+
+### Reentrenar el modelo
+
+```bash
+# Si los datos cambiaron, esto detecta qué pasos ejecutar
+dvc repro
+
+# Subir los nuevos modelos a Google Drive
+dvc push
+
+git add dvc.lock
+git commit -m "reentrenar modelo con datos actualizados"
+```
+
+### Configurar el remote de Google Drive (solo una vez por máquina nueva)
+
+```bash
+# Reemplazá <FOLDER_ID> con el ID de la carpeta en Google Drive
+# (está en la URL: drive.google.com/drive/folders/<FOLDER_ID>)
+dvc remote add -d gdrive gdrive://<FOLDER_ID>
+dvc remote modify gdrive gdrive_acknowledge_abuse true
+```
+
+---
 
 ---
 

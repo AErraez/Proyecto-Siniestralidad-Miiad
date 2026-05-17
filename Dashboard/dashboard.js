@@ -1,23 +1,23 @@
 const API_BASE = '/api';
 const BOGOTA   = [4.6534, -74.0837];
 
-// ── SVG ICON HELPERS ──────────────────────────────────────────────────────────
+// ── ÍCONOS SVG ───────────────────────────────────────────────────────────────
 const _s = (paths, size = '12') =>
   `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
 
 const ICONS = {
-  // Severity badge icons (16px)
+  // Íconos para las insignias de severidad (16px)
   checkCircle: _s(`<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>`, '16'),
   alertTri:    _s(`<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>`, '16'),
   xOctagon:    _s(`<polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>`, '16'),
-  // Action card icons (20px)
+  // Íconos para las tarjetas de acción (20px)
   shieldAlert: _s(`<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>`, '20'),
   ambulance:   _s(`<path d="M10 10H6"/><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>`, '20'),
   info:        _s(`<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>`, '20'),
-  // Chips (12px)
+  // Chips de zona y clúster (12px)
   mapPin:      _s(`<path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>`),
   skullX:      _s(`<circle cx="12" cy="11" r="8"/><path d="M8 18v3h8v-3"/><path d="M9 15h.01"/><path d="M15 15h.01"/>`),
-  // Factor tag icons (12px)
+  // Íconos para los tags de factores (12px)
   bike:        _s(`<circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6h2l3.26 5.74"/><path d="m10 14-1.5-2.5L12 7l3 7-4.5-3.5H15"/><path d="M5.5 14H9"/>`),
   person:      _s(`<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>`),
   zap:         _s(`<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>`),
@@ -28,18 +28,18 @@ const ICONS = {
   car:         _s(`<path d="M19 17H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2z"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/>`),
 };
 
-// ── CLUSTER STATS ─────────────────────────────────────────────────────────────
+// ── ESTADÍSTICAS POR CLÚSTER ──────────────────────────────────────────────────
 let clusterStats = {};
 
 async function loadClusterStats() {
   try {
     const r = await fetch(`${API_BASE}/stats/clusters`);
     if (r.ok) clusterStats = await r.json();
-  } catch { /* silently fail — endpoint available after re-running train_model.py */ }
+  } catch { /* si falla no pasa nada — el endpoint estará disponible después de correr train_model.py */ }
 }
 loadClusterStats();
 
-// ── PICKER MAP ────────────────────────────────────────────────────────────────
+// ── MAPA SELECTOR DE UBICACIÓN ────────────────────────────────────────────────
 const pickerMap = L.map('picker-map', { attributionControl: false }).setView(BOGOTA, 11);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(pickerMap);
 
@@ -58,7 +58,7 @@ function setCoords(lat, lon) {
 pickerMarker.on('dragend', e => { const p = e.target.getLatLng(); setCoords(p.lat, p.lng); });
 pickerMap.on('click', e => { pickerMarker.setLatLng(e.latlng); setCoords(e.latlng.lat, e.latlng.lng); });
 
-// ── INCIDENT MAP ──────────────────────────────────────────────────────────────
+// ── MAPA DE INCIDENTES ────────────────────────────────────────────────────────
 const renderer    = L.canvas({ padding: 0.5 });
 const incidentMap = L.map('incident-map', { preferCanvas: true }).setView(BOGOTA, 11);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -126,7 +126,7 @@ function updateSearchMarker(lat, lon) {
   incidentMap.panTo([lat, lon]);
 }
 
-// ── HISTORICAL CHART ──────────────────────────────────────────────────────────
+// ── GRÁFICO HISTÓRICO ─────────────────────────────────────────────────────────
 const STATIC_HIST = [
   { mes:'Ene', fatales:48,  heridos:610, danos:820 },
   { mes:'Feb', fatales:41,  heridos:570, danos:750 },
@@ -168,7 +168,7 @@ async function loadChart() {
 }
 loadChart();
 
-// ── GAUGE SVG ─────────────────────────────────────────────────────────────────
+// ── MEDIDOR SVG ───────────────────────────────────────────────────────────────
 function buildGauge(pct, color) {
   const r = 70, cx = 90, cy = 85;
   const angle = Math.PI + Math.PI * (pct / 100);
@@ -195,7 +195,7 @@ function buildGauge(pct, color) {
   </svg>`;
 }
 
-// ── PREDICTION ────────────────────────────────────────────────────────────────
+// ── PREDICCIÓN ────────────────────────────────────────────────────────────────
 async function runPrediction() {
   const btn      = document.getElementById('btn-predict');
   const resultEl = document.getElementById('result-content');
@@ -273,7 +273,7 @@ async function runPrediction() {
   }
 }
 
-// ── RENDER RESULT ─────────────────────────────────────────────────────────────
+// ── MOSTRAR RESULTADO ─────────────────────────────────────────────────────────
 function renderResult(data) {
   const pM = data.prob_con_muertos * 100;
   const pH = data.prob_con_heridos * 100;
@@ -286,13 +286,13 @@ function renderResult(data) {
   const cls   = classMap[data.clase_predicha];
   const icon  = iconMap[data.clase_predicha];
 
-  // Cluster fatal stats chip (only shown if /stats/clusters endpoint is available)
+  // Chip con fatales del clúster (solo aparece si el endpoint /stats/clusters está disponible)
   const cStats = clusterStats[String(data.zona_cluster)];
   const fatalChip = cStats
     ? `<div class="cluster-chip fatal-chip">${ICONS.skullX} ${cStats.fatales_6m} fatales · últ. 6 meses</div>`
     : '';
 
-  // Action section — 3 steps for heridos, decisive single card for others
+  // Sección de acción — 3 pasos para heridos, tarjeta directa para los demás casos
   let actionHtml;
   if (data.clase_predicha === 2 || pM >= 20) {
     actionHtml = `

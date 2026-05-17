@@ -1,16 +1,3 @@
-"""
-api.py — SPO-Bogotá: FastAPI REST endpoint for the LightGBM model
-==================================================================
-Start server:
-    pip install fastapi uvicorn lightgbm scikit-learn pandas joblib
-    uvicorn api:app --host 0.0.0.0 --port 8000 --reload
-
-Endpoints:
-    GET  /              → health check
-    POST /predict       → return severity prediction + probabilities
-    GET  /docs          → Swagger UI
-"""
-
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -20,7 +7,7 @@ import joblib
 import json
 import os
 
-# ── LOAD ARTIFACTS ────────────────────────────────────────────────────────────
+# ── CARGA DE MODELOS ──────────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(__file__)
 
 try:
@@ -29,18 +16,18 @@ try:
     feature_columns = joblib.load(os.path.join(BASE_DIR, "feature_columns.pkl"))
 except FileNotFoundError as e:
     raise RuntimeError(
-        f"Model artifacts not found: {e}\n"
-        "Run  python train_model.py  first to generate model.pkl, kmeans.pkl, feature_columns.pkl"
+        f"No se encontraron los archivos del modelo: {e}\n"
+        "Ejecutá  python train_model.py  primero para generar model.pkl, kmeans.pkl, feature_columns.pkl"
     )
 
-# ── APP ───────────────────────────────────────────────────────────────────────
+# ── APLICACIÓN ────────────────────────────────────────────────────────────────
 app = FastAPI(
-    title="SPO-Bogotá — API de Predicción de Siniestros Viales",
+    title="API de Predicción de Siniestros Viales",
     description="LightGBM multiclass classifier: Solo Daños / Con Heridos / Con Muertos",
     version="1.0.0",
 )
 
-# Allow all origins (tighten in production)
+# Permitimos todos los orígenes por ahora — en producción habría que restringir esto
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -48,13 +35,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── SCHEMA ────────────────────────────────────────────────────────────────────
+# ── ESQUEMA DE DATOS ──────────────────────────────────────────────────────────
 class PredictRequest(BaseModel):
-    latitud:                   float = Field(..., example=4.609,  description="GPS latitude (Bogotá: 4.4 – 4.9)")
-    longitud:                  float = Field(..., example=-74.082, description="GPS longitude (Bogotá: -74.3 – -73.9)")
-    hora_acc:                  int   = Field(..., ge=0, le=23,     description="Hour of the incident (0–23)")
-    num_vehiculos:             int   = Field(..., ge=1, le=20,     description="Number of vehicles involved")
-    # binary actor flags
+    latitud:                   float = Field(..., example=4.609,  description="Latitud GPS (Bogotá: 4.4 – 4.9)")
+    longitud:                  float = Field(..., example=-74.082, description="Longitud GPS (Bogotá: -74.3 – -73.9)")
+    hora_acc:                  int   = Field(..., ge=0, le=23,     description="Hora del accidente (0–23)")
+    num_vehiculos:             int   = Field(..., ge=1, le=20,     description="Cantidad de vehículos involucrados")
+    # indicadores binarios de actores involucrados
     con_moto:                  int   = Field(0, ge=0, le=1)
     con_peaton:                int   = Field(0, ge=0, le=1)
     con_bicicleta:             int   = Field(0, ge=0, le=1)
@@ -63,10 +50,10 @@ class PredictRequest(BaseModel):
     con_carga:                 int   = Field(0, ge=0, le=1)
     con_menores:               int   = Field(0, ge=0, le=1)
     con_persona_mayor:         int   = Field(0, ge=0, le=1)
-    # optional — day of week (spanish, lowercase) and accident class
+    # campos opcionales — día de la semana (en minúsculas) y tipo de accidente
     dia_semana:                str   = Field("lunes", description="lunes/martes/miércoles/jueves/viernes/sábado/domingo")
     clase_acc:                 str   = Field("Choque", description="Choque / Atropello / Caida de ocupante / Volcamiento / Otro")
-    mes_num:                   int   = Field(1, ge=1, le=12, description="Month number 1–12")
+    mes_num:                   int   = Field(1, ge=1, le=12, description="Número de mes 1–12")
 
 class PredictResponse(BaseModel):
     clase_predicha:     int
@@ -77,7 +64,7 @@ class PredictResponse(BaseModel):
     zona_cluster:       int
     accion_recomendada: str
 
-# ── HELPERS ───────────────────────────────────────────────────────────────────
+# ── FUNCIONES AUXILIARES ──────────────────────────────────────────────────────
 LABEL_MAP = {0: "Solo Daños", 1: "Con Heridos", 2: "Con Muertos"}
 
 def get_action(clase: int, prob_muertos: float) -> str:
@@ -131,27 +118,27 @@ def stats_clusters():
 
 @app.post("/predict", response_model=PredictResponse, tags=["Prediction"])
 def predict(req: PredictRequest):
-    # 1. Validate coordinates
+    # 1. Validamos que las coordenadas caigan dentro de Bogotá
     if not (4.4 < req.latitud < 4.9 and -74.3 < req.longitud < -73.9):
         raise HTTPException(
             status_code=422,
-            detail="Coordinates out of Bogotá bounding box. "
-                   "Latitude 4.4–4.9 | Longitude -74.3 – -73.9",
+            detail="Las coordenadas están fuera del área de Bogotá. "
+                   "Latitud 4.4–4.9 | Longitud -74.3 – -73.9",
         )
 
-    # 2. Assign spatial cluster
+    # 2. Determinamos a qué clúster espacial pertenece el punto
     coords_df = pd.DataFrame({"Latitud": [req.latitud], "Longitud": [req.longitud]})
     zona = int(kmeans.predict(coords_df)[0])
 
-    # 3. Build feature vector (all zeros, then fill known fields)
+    # 3. Armamos el vector de features (todo en cero, luego llenamos lo que corresponde)
     instance = pd.Series(0, index=feature_columns, dtype=float)
 
-    # numeric
+    # campos numéricos
     instance["Hora_Acc"]                  = req.hora_acc
     instance["Num_Vehiculos_Involucrados"]= req.num_vehiculos
     instance["Mes_Num"]                   = req.mes_num
 
-    # binary Con_* fields (map request field names to dataset column names)
+    # campos binarios Con_* (mapeamos los nombres del request a los del dataset)
     field_map = {
         "Con_Moto":          req.con_moto,
         "Con_Peaton":        req.con_peaton,
@@ -166,22 +153,22 @@ def predict(req: PredictRequest):
         if col in instance.index:
             instance[col] = val
 
-    # one-hot day of week (drop_first removed "domingo")
+    # one-hot día de la semana (drop_first eliminó "domingo")
     dia_col = f"Dia_Semana_Acc_{req.dia_semana.lower()}"
     if dia_col in instance.index:
         instance[dia_col] = 1
 
-    # one-hot accident class (drop_first removed "Atropello")
+    # one-hot tipo de accidente (drop_first eliminó "Atropello")
     clase_col = f"Clase_Acc_{req.clase_acc}"
     if clase_col in instance.index:
         instance[clase_col] = 1
 
-    # one-hot cluster (drop_first removed cluster 0)
+    # one-hot clúster (drop_first eliminó el clúster 0)
     cluster_col = f"Zona_Riesgo_Cluster_{zona}"
     if cluster_col in instance.index:
         instance[cluster_col] = 1
 
-    # 4. Predict
+    # 4. Predecimos
     X_input = instance.to_frame().T
     clase_pred  = int(model.predict(X_input)[0])
     probas      = model.predict_proba(X_input)[0]

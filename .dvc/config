@@ -1,0 +1,7 @@
+[core]
+    remote = onedrive
+['remote "gdrive"']
+    url = gdrive://1x-axcr6K3zZyZe2kPOr2JKCPbmAhr2-U
+    gdrive_acknowledge_abuse = true
+['remote "onedrive"']
+    url = C:\Users\ariel\OneDrive - Universidad de los Andes\Attachments\spo-bogota

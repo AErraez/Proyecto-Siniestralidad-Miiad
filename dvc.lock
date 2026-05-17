@@ -1,0 +1,39 @@
+schema: '2.0'
+stages:
+  entrenar:
+    cmd: python train_model.py --data base-anuario-de-siniestralidad-2024.xlsx 
+      --output-dir .
+    deps:
+    - path: base-anuario-de-siniestralidad-2024.xlsx
+      hash: md5
+      md5: 49f6a86d2e483bdf66b9bc72aafdd267
+      size: 38200589
+    - path: train_model.py
+      hash: md5
+      md5: 871094b0495469031643a4c0b7f7f443
+      size: 9521
+    outs:
+    - path: cluster_stats.json
+      hash: md5
+      md5: ffd1a2eb02c04877e239f812072c137f
+      size: 951
+    - path: feature_columns.pkl
+      hash: md5
+      md5: e0d99e0e2eef099a92eb3650c1d7de7f
+      size: 993
+    - path: kmeans.pkl
+      hash: md5
+      md5: e4eb183671dd2d5caa5da156aeffca70
+      size: 330747
+    - path: map_data.json
+      hash: md5
+      md5: ad20f37735f227990620ea51a01e4c46
+      size: 150102
+    - path: model.pkl
+      hash: md5
+      md5: 9f882b2702d4ab3a8d4f047a3ad64ffb
+      size: 6264476
+    - path: stats.json
+      hash: md5
+      md5: 7aca2d1f72e1460df80c157c9213022b
+      size: 952
