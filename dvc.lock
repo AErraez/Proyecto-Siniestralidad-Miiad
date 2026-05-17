@@ -1,14 +1,14 @@
 schema: '2.0'
 stages:
   entrenar:
-    cmd: python train_model.py --data base-anuario-de-siniestralidad.xlsx 
-      --output-dir .
+    cmd: python train.py --data ../data/base-anuario-de-siniestralidad.xlsx 
+      --output-dir ../website/api
     deps:
-    - path: base-anuario-de-siniestralidad.xlsx
+    - path: ../data/base-anuario-de-siniestralidad.xlsx
       hash: md5
       md5: 49f6a86d2e483bdf66b9bc72aafdd267
       size: 38200589
-    - path: train_model.py
+    - path: train.py
       hash: md5
-      md5: 1faa61fb4db0c15f8d152c0921911bc8
-      size: 9516
+      md5: a7fe212f7680981e8ee6be27754d703a
+      size: 12408

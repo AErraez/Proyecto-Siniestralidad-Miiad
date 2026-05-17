@@ -1,7 +1,7 @@
 stages:
   entrenar:
-    wdir: api
-    cmd: python train_model.py --data base-anuario-de-siniestralidad.xlsx --output-dir .
+    wdir: model
+    cmd: python train.py --data ../data/base-anuario-de-siniestralidad.xlsx --output-dir ../website/api
     deps:
-      - train_model.py
-      - base-anuario-de-siniestralidad.xlsx
+      - train.py
+      - ../data/base-anuario-de-siniestralidad.xlsx

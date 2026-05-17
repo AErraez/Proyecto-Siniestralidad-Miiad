@@ -1,13 +1,13 @@
 services:
   api:
-    build: ./api
+    build: ./website/api
     container_name: api
     ports:
       - "8000:8000"
     restart: unless-stopped
 
   dashboard:
-    build: ./Dashboard
+    build: ./website/dashboard
     container_name: dashboard
     ports:
       - "80:80"

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+﻿from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import pandas as pd
@@ -7,7 +7,7 @@ import joblib
 import json
 import os
 
-# ── CARGA DE MODELOS ──────────────────────────────────────────────────────────
+# CARGA DE MODELOS
 BASE_DIR = os.path.dirname(__file__)
 
 try:
@@ -20,7 +20,7 @@ except FileNotFoundError as e:
         "Ejecutá  python train_model.py  primero para generar model.pkl, kmeans.pkl, feature_columns.pkl"
     )
 
-# ── APLICACIÓN ────────────────────────────────────────────────────────────────
+# APLICACIÓN
 app = FastAPI(
     title="API de Predicción de Siniestros Viales",
     description="LightGBM multiclass classifier: Solo Daños / Con Heridos / Con Muertos",
@@ -35,7 +35,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── ESQUEMA DE DATOS ──────────────────────────────────────────────────────────
+# ESQUEMA DE DATOS
 class PredictRequest(BaseModel):
     latitud:                   float = Field(..., example=4.609,  description="Latitud GPS (Bogotá: 4.4 – 4.9)")
     longitud:                  float = Field(..., example=-74.082, description="Longitud GPS (Bogotá: -74.3 – -73.9)")
@@ -64,7 +64,7 @@ class PredictResponse(BaseModel):
     zona_cluster:       int
     accion_recomendada: str
 
-# ── FUNCIONES AUXILIARES ──────────────────────────────────────────────────────
+# FUNCIONES AUXILIARES
 LABEL_MAP = {0: "Solo Daños", 1: "Con Heridos", 2: "Con Muertos"}
 
 def get_action(clase: int, prob_muertos: float) -> str:
@@ -74,7 +74,7 @@ def get_action(clase: int, prob_muertos: float) -> str:
         return "PRIORIDAD ALTA — Despacho de Ambulancia de Soporte Vital Básico."
     return "DESPACHO ESTÁNDAR — Grúa y Policía de Tránsito."
 
-# ── ENDPOINTS ─────────────────────────────────────────────────────────────────
+# ENDPOINTS
 @app.get("/", tags=["Health"])
 def health():
     return {"status": "ok", "model": "LightGBM SPO-Bogotá v1.0"}

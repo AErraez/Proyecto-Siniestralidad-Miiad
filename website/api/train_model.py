@@ -1,4 +1,4 @@
-import argparse
+﻿import argparse
 import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
@@ -7,25 +7,26 @@ from sklearn.metrics import classification_report
 import lightgbm as lgb
 import joblib
 import warnings
+import json
 import os
 
 warnings.filterwarnings("ignore")
 
-# ── ARGUMENTOS DE LÍNEA DE COMANDOS ──────────────────────────────────────────
+# ARGUMENTOS DE LÍNEA DE COMANDOS
 parser = argparse.ArgumentParser()
-parser.add_argument("--data", default="base-anuario-de-siniestralidad.xlsx",
+parser.add_argument("--data", default="../../data/base-anuario-de-siniestralidad.xlsx",
                     help="Ruta al archivo Excel con las hojas Siniestros y Vehiculos")
 parser.add_argument("--output-dir", default=".", help="Carpeta donde se guardarán los archivos .pkl")
 args = parser.parse_args()
 
-# ── CARGA DE DATOS ───────────────────────────────────────────────────────────
-print(f"📂 Loading data from: {args.data}")
+# CARGA DE DATOS
+print(f"Cargando datos desde: {args.data}")
 df_siniestros = pd.read_excel(args.data, sheet_name="Siniestros")
 df_vehiculos  = pd.read_excel(args.data, sheet_name="Vehiculos")
-print(f"   Siniestros: {df_siniestros.shape[0]:,} rows | Vehiculos: {df_vehiculos.shape[0]:,} rows")
+print(f"   Siniestros: {df_siniestros.shape[0]:,} filas | Vehículos: {df_vehiculos.shape[0]:,} filas")
 
-# ── PREPROCESAMIENTO ─────────────────────────────────────────────────────────
-print("⚙️  Preprocesando datos...")
+# PREPROCESAMIENTO
+print("Preprocesando datos...")
 
 # 1. Contamos cuántos vehículos hubo por siniestro
 conteo_veh = (df_vehiculos.groupby("Codigo_Accidente")
@@ -54,25 +55,24 @@ mapa_meses = {
 }
 df_ml["Mes_Num"] = df_ml["MM_Acc"].map(mapa_meses)
 
-print(f"   Clean dataset: {df_ml.shape[0]:,} rows")
+print(f"   Dataset limpio: {df_ml.shape[0]:,} filas")
 
-# ── CLUSTERING ESPACIAL ──────────────────────────────────────────────────────
-print("🗺️  Fitting KMeans (15 clusters)...")
+# CLUSTERING ESPACIAL
+print("Ajustando KMeans (15 clústeres)...")
 coords = df_ml[["Latitud", "Longitud"]]
 kmeans = KMeans(n_clusters=15, random_state=42, n_init=10)
 df_ml["Zona_Riesgo_Cluster"] = kmeans.fit_predict(coords)
 
-# ── CODIFICACIÓN ONE-HOT ─────────────────────────────────────────────────────
-df_final = df_ml.copy()
-df_final = pd.get_dummies(df_final,
+# CODIFICACIÓN ONE-HOT
+df_final = pd.get_dummies(df_ml.copy(),
                           columns=["Dia_Semana_Acc", "Clase_Acc", "Zona_Riesgo_Cluster"],
                           drop_first=True)
 
-# ── VARIABLE OBJETIVO ────────────────────────────────────────────────────────
+# VARIABLE OBJETIVO
 mapa_target = {"Solo Daños": 0, "Con Heridos": 1, "Con Muertos": 2}
 df_final["Target"] = df_final["Gravedad_Indicador_Tradicional"].map(mapa_target)
 
-# ── SELECCIÓN DE VARIABLES ───────────────────────────────────────────────────
+# SELECCIÓN DE VARIABLES
 drop_cols = [
     "Gravedad_Indicador_Tradicional", "Gravedad_indicador_30d", "Target",
     "Codigo_Accidente", "Formulario", "Fecha_Acc", "Direccion",
@@ -83,44 +83,40 @@ X = df_final.drop(drop_cols, axis=1, errors="ignore")
 X = X.select_dtypes(include=[np.number, bool])
 y = df_final["Target"]
 
-print(f"   Features: {X.shape[1]} | Target distribution:\n{y.value_counts().sort_index()}")
+print(f"   Features: {X.shape[1]} | Distribución del target:\n{y.value_counts().sort_index()}")
 
-# ── DIVISIÓN ENTRENAMIENTO / PRUEBA ──────────────────────────────────────────
+# DIVISIÓN ENTRENAMIENTO / PRUEBA
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, stratify=y, random_state=42
-)
+    X, y, test_size=0.2, stratify=y, random_state=42)
 
-# ── ENTRENAMIENTO DEL MODELO ─────────────────────────────────────────────────
-print("🚀 Training LightGBM...")
+# ENTRENAMIENTO DEL MODELO
+print("Entrenando LightGBM...")
 model = lgb.LGBMClassifier(
     class_weight="balanced",
     n_estimators=300,
-    learning_rate=0.05,
-    num_leaves=63,
+    learning_rate=0.01,
+    num_leaves=32,
     random_state=42,
     verbose=-1,
 )
 model.fit(X_train, y_train)
 
-# ── EVALUACIÓN DEL MODELO ────────────────────────────────────────────────────
+# EVALUACIÓN DEL MODELO
 y_pred = model.predict(X_test)
-print("\n📊 Classification Report:")
+print("\nReporte de Clasificación:")
 print(classification_report(y_test, y_pred,
                              target_names=["Solo Daños", "Con Heridos", "Con Muertos"]))
 
-# ── GUARDADO DE ARCHIVOS ─────────────────────────────────────────────────────
+# GUARDADO DE ARCHIVOS
 os.makedirs(args.output_dir, exist_ok=True)
-joblib.dump(model,                os.path.join(args.output_dir, "model.pkl"))
-joblib.dump(kmeans,               os.path.join(args.output_dir, "kmeans.pkl"))
+joblib.dump(model,                    os.path.join(args.output_dir, "model.pkl"))
+joblib.dump(kmeans,                   os.path.join(args.output_dir, "kmeans.pkl"))
 joblib.dump(X_train.columns.tolist(), os.path.join(args.output_dir, "feature_columns.pkl"))
 
-print(f"\n✅ Saved to {args.output_dir}/")
+print(f"\nGuardado en {args.output_dir}/")
 print("   model.pkl, kmeans.pkl, feature_columns.pkl")
 
-# ── JSON DE ESTADÍSTICAS MENSUALES ───────────────────────────────────────────
-import json
-
-print("📊 Generating stats.json...")
+# JSON DE ESTADÍSTICAS MENSUALES
 meses_orden = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
                "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
 monthly = []
@@ -137,38 +133,28 @@ for mes_name in meses_orden:
 with open(os.path.join(args.output_dir, "stats.json"), "w", encoding="utf-8") as f:
     json.dump({"monthly": monthly}, f, ensure_ascii=False)
 
-# ── JSON PARA EL MAPA ────────────────────────────────────────────────────────
-print("🗺️  Generating map_data.json...")
+# JSON PARA EL MAPA
+print("Generando map_data.json...")
 SAMPLE_N = 3000
 sev_map  = {"Solo Daños": 0, "Con Heridos": 1, "Con Muertos": 2}
 df_map   = df_ml[["Latitud", "Longitud", "Gravedad_Indicador_Tradicional",
                    "Zona_Riesgo_Cluster"]].copy()
 df_map["severity"] = df_map["Gravedad_Indicador_Tradicional"].map(sev_map)
 df_map = df_map.dropna(subset=["severity"])
-
 if len(df_map) > SAMPLE_N:
     df_map = (df_map.groupby("severity", group_keys=False)
               .apply(lambda x: x.sample(
                   min(len(x), max(1, int(SAMPLE_N * len(x) / len(df_map)))),
                   random_state=42)))
-
-incidents = [
-    {"lat": round(float(r.Latitud), 5),
-     "lon": round(float(r.Longitud), 5),
-     "severity": int(r.severity)}
-    for r in df_map.itertuples()
-]
-clusters = [
-    {"id": int(i), "lat": round(float(c[0]), 5), "lon": round(float(c[1]), 5)}
-    for i, c in enumerate(kmeans.cluster_centers_)
-]
+incidents = [{"lat": round(float(r.Latitud), 5), "lon": round(float(r.Longitud), 5),
+              "severity": int(r.severity)} for r in df_map.itertuples()]
+clusters  = [{"id": int(i), "lat": round(float(c[0]), 5), "lon": round(float(c[1]), 5)}
+             for i, c in enumerate(kmeans.cluster_centers_)]
 with open(os.path.join(args.output_dir, "map_data.json"), "w", encoding="utf-8") as f:
     json.dump({"incidents": incidents, "clusters": clusters}, f)
 
-print("✅ Generated stats.json and map_data.json")
-
-# ── JSON DE ESTADÍSTICAS POR CLÚSTER ─────────────────────────────────────────
-print("📊 Generating cluster_stats.json (last 6 months per cluster)...")
+# JSON DE ESTADÍSTICAS POR CLÚSTER
+print("Generando cluster_stats.json...")
 last6 = df_ml[df_ml["Mes_Num"] >= 7]
 cluster_stats = {}
 for cid in range(15):
@@ -180,4 +166,5 @@ for cid in range(15):
     }
 with open(os.path.join(args.output_dir, "cluster_stats.json"), "w", encoding="utf-8") as f:
     json.dump(cluster_stats, f)
-print("✅ Generated cluster_stats.json")
+
+print("stats.json, map_data.json y cluster_stats.json generados.")

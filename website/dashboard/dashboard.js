@@ -1,7 +1,7 @@
-const API_BASE = '/api';
+﻿const API_BASE = 'http://localhost:8000';
 const BOGOTA   = [4.6534, -74.0837];
 
-// ── ÍCONOS SVG ───────────────────────────────────────────────────────────────
+// ÍCONOS SVG
 const _s = (paths, size = '12') =>
   `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
 
@@ -28,7 +28,7 @@ const ICONS = {
   car:         _s(`<path d="M19 17H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2z"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/>`),
 };
 
-// ── ESTADÍSTICAS POR CLÚSTER ──────────────────────────────────────────────────
+// ESTADÍSTICAS POR CLÚSTER
 let clusterStats = {};
 
 async function loadClusterStats() {
@@ -39,7 +39,7 @@ async function loadClusterStats() {
 }
 loadClusterStats();
 
-// ── MAPA SELECTOR DE UBICACIÓN ────────────────────────────────────────────────
+// MAPA SELECTOR DE UBICACIÓN
 const pickerMap = L.map('picker-map', { attributionControl: false }).setView(BOGOTA, 11);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(pickerMap);
 
@@ -58,7 +58,7 @@ function setCoords(lat, lon) {
 pickerMarker.on('dragend', e => { const p = e.target.getLatLng(); setCoords(p.lat, p.lng); });
 pickerMap.on('click', e => { pickerMarker.setLatLng(e.latlng); setCoords(e.latlng.lat, e.latlng.lng); });
 
-// ── MAPA DE INCIDENTES ────────────────────────────────────────────────────────
+// MAPA DE INCIDENTES
 const renderer    = L.canvas({ padding: 0.5 });
 const incidentMap = L.map('incident-map', { preferCanvas: true }).setView(BOGOTA, 11);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -126,7 +126,7 @@ function updateSearchMarker(lat, lon) {
   incidentMap.panTo([lat, lon]);
 }
 
-// ── GRÁFICO HISTÓRICO ─────────────────────────────────────────────────────────
+// GRÁFICO HISTÓRICO
 const STATIC_HIST = [
   { mes:'Ene', fatales:48,  heridos:610, danos:820 },
   { mes:'Feb', fatales:41,  heridos:570, danos:750 },
@@ -168,7 +168,7 @@ async function loadChart() {
 }
 loadChart();
 
-// ── MEDIDOR SVG ───────────────────────────────────────────────────────────────
+// MEDIDOR SVG
 function buildGauge(pct, color) {
   const r = 70, cx = 90, cy = 85;
   const angle = Math.PI + Math.PI * (pct / 100);
@@ -195,7 +195,7 @@ function buildGauge(pct, color) {
   </svg>`;
 }
 
-// ── PREDICCIÓN ────────────────────────────────────────────────────────────────
+// PREDICCIÓN
 async function runPrediction() {
   const btn      = document.getElementById('btn-predict');
   const resultEl = document.getElementById('result-content');
@@ -273,7 +273,7 @@ async function runPrediction() {
   }
 }
 
-// ── MOSTRAR RESULTADO ─────────────────────────────────────────────────────────
+// MOSTRAR RESULTADO
 function renderResult(data) {
   const pM = data.prob_con_muertos * 100;
   const pH = data.prob_con_heridos * 100;
@@ -292,15 +292,18 @@ function renderResult(data) {
     ? `<div class="cluster-chip fatal-chip">${ICONS.skullX} ${cStats.fatales_6m} fatales · últ. 6 meses</div>`
     : '';
 
-  // Sección de acción — 3 pasos para heridos, tarjeta directa para los demás casos
   let actionHtml;
-  if (data.clase_predicha === 2 || pM >= 20) {
+  if (data.clase_predicha === 0) {
     actionHtml = `
-      <div class="action-card critical">
-        <div class="action-icon">${ICONS.shieldAlert}</div>
+      <div class="action-card">
+        <div class="action-icon">${ICONS.info}</div>
         <div class="action-text">
-          <strong>Acción Recomendada</strong>
-          ${data.accion_recomendada}
+          <strong>Protocolo de Respuesta — Solo Daños</strong>
+          <div class="action-steps">
+            <div class="action-step"><span class="step-num">1</span><span>Despacho de grúa y unidad de Tránsito al lugar del accidente.</span></div>
+            <div class="action-step"><span class="step-num">2</span><span>Verificación en escena de que no existan heridos no reportados.</span></div>
+            <div class="action-step"><span class="step-num">3</span><span>Gestión de la circulación vial y levantamiento del reporte oficial.</span></div>
+          </div>
         </div>
       </div>`;
   } else if (data.clase_predicha === 1) {
@@ -318,11 +321,15 @@ function renderResult(data) {
       </div>`;
   } else {
     actionHtml = `
-      <div class="action-card">
-        <div class="action-icon">${ICONS.info}</div>
+      <div class="action-card critical">
+        <div class="action-icon">${ICONS.shieldAlert}</div>
         <div class="action-text">
-          <strong>Acción Recomendada</strong>
-          ${data.accion_recomendada}
+          <strong>Protocolo de Respuesta — Con Muertos</strong>
+          <div class="action-steps">
+            <div class="action-step"><span class="step-num">1</span><span>Despacho inmediato de Ambulancia Medicalizada (SVA) y notificación a unidad forense.</span></div>
+            <div class="action-step"><span class="step-num">2</span><span>Activación CÓDIGO ROJO — coordinación con centro de trauma de mayor complejidad.</span></div>
+            <div class="action-step"><span class="step-num">3</span><span>Aseguramiento de la escena, preservación de evidencia y notificación a autoridades judiciales.</span></div>
+          </div>
         </div>
       </div>`;
   }

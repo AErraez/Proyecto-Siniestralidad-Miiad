@@ -2,3 +2,6 @@ base-anuario-de-siniestralidad.xlsx
 __pycache__
 __pycache__/
 
+# Experimentos MLflow — solo locales, no van a git
+model/mlruns/
+
