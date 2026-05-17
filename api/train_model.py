@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 
 # ── ARGUMENTOS DE LÍNEA DE COMANDOS ──────────────────────────────────────────
 parser = argparse.ArgumentParser()
-parser.add_argument("--data", default="base-anuario-de-siniestralidad-2024.xlsx",
+parser.add_argument("--data", default="base-anuario-de-siniestralidad.xlsx",
                     help="Ruta al archivo Excel con las hojas Siniestros y Vehiculos")
 parser.add_argument("--output-dir", default=".", help="Carpeta donde se guardarán los archivos .pkl")
 args = parser.parse_args()

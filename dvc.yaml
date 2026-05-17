@@ -1,14 +1,7 @@
 stages:
   entrenar:
     wdir: api
-    cmd: python train_model.py --data base-anuario-de-siniestralidad-2024.xlsx --output-dir .
+    cmd: python train_model.py --data base-anuario-de-siniestralidad.xlsx --output-dir .
     deps:
       - train_model.py
-      - base-anuario-de-siniestralidad-2024.xlsx
-    outs:
-      - model.pkl
-      - kmeans.pkl
-      - feature_columns.pkl
-      - stats.json
-      - map_data.json
-      - cluster_stats.json
+      - base-anuario-de-siniestralidad.xlsx

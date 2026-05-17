@@ -14,7 +14,7 @@ spo-bogota/
 │   ├── stats.json               ← (DVC) Estadísticas mensuales
 │   ├── map_data.json            ← (DVC) Datos del mapa
 │   ├── cluster_stats.json       ← (DVC) Estadísticas por clúster
-│   └── base-anuario-de-siniestralidad-2024.xlsx  ← (DVC) Datos SDM
+│   └── base-anuario-de-siniestralidad.xlsx  ← (DVC) Datos SDM
 ├── dashboard/
 │   ├── dashboard.html           ← Interfaz web del simulador
 │   ├── dashboard.js
@@ -44,8 +44,8 @@ dvc pull
 
 ```bash
 # Reemplazá el Excel en api/ y volvé a trackear
-dvc add api/base-anuario-de-siniestralidad-2024.xlsx
-git add api/base-anuario-de-siniestralidad-2024.xlsx.dvc
+dvc add api/base-anuario-de-siniestralidad.xlsx
+git add api/base-anuario-de-siniestralidad.xlsx.dvc
 git commit -m "actualizar datos siniestralidad 2025"
 dvc push
 ```
@@ -89,7 +89,7 @@ pip install -r requirements.txt
 Coloca el archivo Excel en la misma carpeta y ejecuta:
 
 ```bash
-python train_model.py --data base-anuario-de-siniestralidad-2024.xlsx
+python train_model.py --data base-anuario-de-siniestralidad.xlsx
 ```
 
 Esto genera:
