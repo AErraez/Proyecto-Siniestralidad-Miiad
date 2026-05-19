@@ -281,6 +281,13 @@ spo-bogota/
 │   ├── dashboard.html           ← Interfaz web del simulador
 │   ├── dashboard.js
 │   └── dashboard.css
+├── model/
+│   ├── notebooks/
+│   │   └── Proyecto_Siniestros_Viales_G8V4.ipynb  ← EDA, clustering y comparación de modelos
+│   ├── train.py                 ← Script de entrenamiento con tracking MLflow
+│   ├── requirements.txt         ← Dependencias del entorno de modelado
+│   ├── mlflow.db                
+│   └── mlruns/                  ← Métricas de experimentos
 └── requirements-dev.txt         ← Dependencias de desarrollo (DVC)
 ```
 
