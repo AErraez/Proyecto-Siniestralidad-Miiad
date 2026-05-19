@@ -26,9 +26,10 @@ pip install -r api/requirements.txt
 
 ```bash
 pip install -r requirements-dev.txt
+pip install -r model/requirements.txt
 ```
 
-### Configurar remote de DVC (una sola vez por máquina)
+### Configurar remote de DVC
 
 ```bash
 # Apuntar al directorio local de OneDrive donde se almacenan los artefactos
@@ -74,6 +75,55 @@ dvc push  # copia al directorio OneDrive configurado
 | 0 | Solo Daños | Solo daños materiales |
 | 1 | Con Heridos | Al menos un herido |
 | 2 | Con Muertos | Al menos una fatalidad |
+
+---
+
+## Entrenamiento y Experimentos
+
+### Notebook de exploración y modelado
+
+El análisis completo (EDA, clustering, comparación de modelos y SHAP) se encuentra en:
+
+```
+model/notebooks/Proyecto_Siniestros_Viales_G8V4.ipynb
+```
+
+El notebook entrena y compara cuatro algoritmos con `class_weight='balanced'` para compensar el desbalanceo extremo de la clase "Con Muertos" (< 3%):
+
+| Modelo | Accuracy | Recall (Muertos) | AUC (Muertos) |
+|--------|----------|-----------------|---------------|
+| Regresión Logística (baseline) | 0.735 | 0.681 | 0.849 |
+| Árbol de Decisión | ~0.72 | ~0.64 | ~0.74 |
+| Random Forest | ~0.73 | ~0.65 | ~0.84 |
+| **LightGBM (seleccionado)** | **0.730** | **0.747** | **0.875** |
+
+La métrica de decisión es el **Recall de "Con Muertos"**: un falso negativo (fatalidad predicha como daño leve) tiene mayor costo operativo que un falso positivo.
+
+### Seguimiento de experimentos con MLflow
+
+Todos los runs del notebook se registran automáticamente en el experimento `siniestros-severidad`, almacenado localmente en `model/mlruns/`.
+
+**Métricas registradas por run:**
+
+| Métrica | Descripción |
+|---------|-------------|
+| `accuracy` | Exactitud global en test |
+| `recall_muertos` / `recall_heridos` / `recall_danos` | Sensibilidad por clase |
+| `f1_muertos` / `f1_heridos` / `f1_danos` | F1-score por clase |
+| `auc_muertos` | Área bajo la curva ROC para la clase fatal |
+
+**Parámetros registrados:** `model_type`, `n_estimators`, `learning_rate`, `num_leaves`, `class_weight`, `n_features`, `test_size`, `n_clusters`, `random_state`.
+
+**Levantar la UI de MLflow:**
+
+```bash
+cd model
+mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5000
+```
+
+Luego abrir http://localhost:5000. Seleccionar el experimento `siniestros-severidad` para comparar los runs por `recall_muertos` o `auc_muertos`.
+
+> El backend SQLite (`model/mlflow.db`) y los artefactos (`model/mlruns/`) están excluidos de git (`.gitignore`) y son locales a cada máquina.
 
 ---
 
