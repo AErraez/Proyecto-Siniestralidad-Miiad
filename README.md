@@ -1,114 +1,103 @@
-# SPO-Bogotá — Guía de Despliegue
+# SPO-Bogotá — Predicción de Severidad de Siniestros Viales
 
-## Archivos del Proyecto
+---
 
+## Problema
+
+La Secretaría de Movilidad de Bogotá (SDM) registra miles de siniestros viales al año. El tiempo de respuesta ante un accidente depende en gran medida de la capacidad del operador para estimar la severidad del evento antes de que llegue la ambulancia.
+
+Este proyecto proporciona un modelo de clasificación multiclase que, a partir de características del siniestro (ubicación, hora, actores involucrados, tipo de accidente), predice si el resultado será **solo daños materiales**, **con heridos** o **con muertos**, y emite una recomendación de acción operativa inmediata.
+
+---
+
+## Instalación
+
+### Requisitos previos
+- Python 3.9+
+- pip
+
+### Dependencias de la API
+
+```bash
+pip install -r api/requirements.txt
 ```
-spo-bogota/
-├── api/
-│   ├── train_model.py           ← Entrena y guarda los .pkl
-│   ├── api.py                   ← Servidor FastAPI
-│   ├── requirements.txt         ← Dependencias Python de la API
-│   ├── model.pkl                ← (DVC) Modelo LightGBM
-│   ├── kmeans.pkl               ← (DVC) Clustering espacial
-│   ├── feature_columns.pkl      ← (DVC) Orden de columnas
-│   ├── stats.json               ← (DVC) Estadísticas mensuales
-│   ├── map_data.json            ← (DVC) Datos del mapa
-│   ├── cluster_stats.json       ← (DVC) Estadísticas por clúster
-│   └── base-anuario-de-siniestralidad.xlsx  ← (DVC) Datos SDM
-├── dashboard/
-│   ├── dashboard.html           ← Interfaz web del simulador
-│   ├── dashboard.js
-│   └── dashboard.css
-├── dvc.yaml                     ← Pipeline de entrenamiento (DVC)
-├── dvc.lock                     ← Estado actual del pipeline (DVC)
-└── requirements-dev.txt         ← Dependencias de desarrollo (DVC)
+
+### Dependencias de desarrollo (DVC, entrenamiento)
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+### Configurar remote de DVC (una sola vez por máquina)
+
+```bash
+# Apuntar al directorio local de OneDrive donde se almacenan los artefactos
+dvc remote add -d onedrive "C:\Users\<tu-usuario>\OneDrive - Universidad de los Andes\Attachments\spo-bogota"
 ```
 
 ---
 
-## Gestión de datos con DVC
+## Datos
 
-Los archivos grandes (Excel de datos, modelos `.pkl`, JSONs generados) **no están en git** — están versionados con [DVC](https://dvc.org) y almacenados en Google Drive.
+El Excel de datos SDM **no está en git** — está versionado con [DVC](https://dvc.org) y almacenado en OneDrive. Los modelos `.pkl` y JSONs generados se producen localmente al entrenar.
 
-### Primer uso — clonar el proyecto y obtener los datos
+### Obtener el Excel por primera vez
 
 ```bash
-# 1. Instalar dependencias de desarrollo
-pip install -r requirements-dev.txt
-
-# 2. Bajar los datos y modelos desde Google Drive (te va a pedir login Google la primera vez)
 dvc pull
 ```
 
-### Actualizar los datos (nueva versión del Excel)
+### Actualizar el dataset (nueva versión del Excel)
 
 ```bash
-# Reemplazá el Excel en api/ y volvé a trackear
-dvc add api/base-anuario-de-siniestralidad.xlsx
-git add api/base-anuario-de-siniestralidad.xlsx.dvc
+dvc add data/base-anuario-de-siniestralidad.xlsx
+git add data/base-anuario-de-siniestralidad.xlsx.dvc
 git commit -m "actualizar datos siniestralidad 2025"
-dvc push
+dvc push  # copia al directorio OneDrive configurado
 ```
 
-### Reentrenar el modelo
+### Variables del modelo (49 features)
 
-```bash
-# Si los datos cambiaron, esto detecta qué pasos ejecutar
-dvc repro
+| Grupo | Variables |
+|-------|-----------|
+| Temporal | `Hora_Acc`, `Mes_Num` |
+| Operacional | `Num_Vehiculos_Involucrados` |
+| Actores (binario) | `Con_Moto`, `Con_Peaton`, `Con_Bicicleta`, `Con_Velocidad`, `Con_Embriaguez`, `Con_Carga`, `Con_Menores`, `Con_Persona_Mayor`, `Con_Rutas`, `Con_Tpi`, `Con_Tpp`, `Con_Sitp`, `Con_Troncal`, `Con_Alimentador`, `Con_Zonal`, `Con_Provisional`, `Con_Articulado`, `Con_Biarticulado`, `Con_Padron_Dual`, `Con_Servicio_Especial`, `Con_Taxi` |
+| Día (one-hot) | `Dia_Semana_Acc_jueves/lunes/martes/miércoles/sábado/viernes` |
+| Clase (one-hot) | `Clase_Acc_Caida de ocupante/Choque/Otro/Volcamiento` |
+| Cluster (one-hot) | `Zona_Riesgo_Cluster_1` ... `Zona_Riesgo_Cluster_14` |
 
-# Subir los nuevos modelos a Google Drive
-dvc push
+### Variable objetivo (target)
 
-git add dvc.lock
-git commit -m "reentrenar modelo con datos actualizados"
-```
-
-### Configurar el remote de Google Drive (solo una vez por máquina nueva)
-
-```bash
-# Reemplazá <FOLDER_ID> con el ID de la carpeta en Google Drive
-# (está en la URL: drive.google.com/drive/folders/<FOLDER_ID>)
-dvc remote add -d gdrive gdrive://<FOLDER_ID>
-dvc remote modify gdrive gdrive_acknowledge_abuse true
-```
+| Valor | Clase | Descripción |
+|-------|-------|-------------|
+| 0 | Solo Daños | Solo daños materiales |
+| 1 | Con Heridos | Al menos un herido |
+| 2 | Con Muertos | Al menos una fatalidad |
 
 ---
 
----
+## Ejecución
 
-## PASO 1 — Instalar dependencias
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## PASO 2 — Entrenar el modelo y generar los .pkl
-
-Coloca el archivo Excel en la misma carpeta y ejecuta:
+### 1 — Entrenar el modelo
 
 ```bash
-python train_model.py --data base-anuario-de-siniestralidad.xlsx
+cd api
+python train_model.py --data ../data/base-anuario-de-siniestralidad.xlsx
 ```
 
-Esto genera:
-- **model.pkl** — clasificador LightGBM entrenado
-- **kmeans.pkl** — modelo KMeans de 15 clústeres espaciales
-- **feature_columns.pkl** — lista ordenada de las 49 features
+Genera localmente: `model.pkl` (LightGBM), `kmeans.pkl` (15 clústeres espaciales), `feature_columns.pkl`, `stats.json`, `map_data.json`, `cluster_stats.json`.
 
----
-
-## PASO 3 — Levantar la API
+### 2 — Levantar la API
 
 ```bash
 uvicorn api:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Verifica que funciona abriendo: http://localhost:8000  
-Documentación Swagger:        http://localhost:8000/docs
+- API: http://localhost:8000
+- Swagger: http://localhost:8000/docs
 
-### Ejemplo de llamada directa (curl)
+#### Ejemplo de llamada
 
 ```bash
 curl -X POST http://localhost:8000/predict \
@@ -132,7 +121,82 @@ curl -X POST http://localhost:8000/predict \
   }'
 ```
 
-Respuesta esperada:
+### 3 — Abrir el dashboard
+
+1. Abre `dashboard/dashboard.html` en el navegador
+2. Verifica que la URL de la API apunta a `http://localhost:8000`
+3. Ingresa los datos del siniestro y presiona **Calcular Riesgo**
+
+---
+
+## Despliegue en AWS EC2
+
+### 1 — Crear y acceder a la instancia
+
+**Crear instancia EC2**
+- AWS Console → EC2 → Launch Instance
+- AMI: Ubuntu | Tipo: t3.micro | Almacenamiento: 20 GB
+- Crear o seleccionar una llave `.pem` para SSH
+- Abrir puertos: `22` (SSH), `80` (Dashboard), `8001` (API)
+
+**Conectarse vía SSH**
+
+```bash
+ssh -i /path/to/llave.pem ubuntu@IP_PUBLICA
+```
+
+---
+
+### 2 — Instalar Docker
+
+```bash
+# Eliminar versiones antiguas
+sudo apt-get remove docker docker-engine docker.io containerd runc -y
+
+# Actualizar e instalar dependencias
+sudo apt-get update
+sudo apt-get install ca-certificates curl gnupg -y
+
+# Agregar clave GPG y repositorio oficial de Docker
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo $VERSION_CODENAME) stable" \
+  | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Instalar Docker Engine
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
+```
+
+---
+
+### 3 — Descargar el código y levantar los contenedores
+
+```bash
+# Clonar repositorio
+git clone https://github.com/AErraez/Proyecto-Development
+cd Proyecto-Development
+
+# Construir y ejecutar
+sudo docker compose up -d --build
+```
+
+Una vez levantados, acceder desde el navegador:
+
+| Servicio | URL |
+|----------|-----|
+| Dashboard | `http://IP_PUBLICA:80` |
+| API | `http://IP_PUBLICA:8001` |
+
+---
+
+## Resultados
+
+El modelo devuelve una clasificación con probabilidades por clase y una recomendación operativa:
+
 ```json
 {
   "clase_predicha": 1,
@@ -141,50 +205,42 @@ Respuesta esperada:
   "prob_con_heridos": 0.6112,
   "prob_con_muertos": 0.1547,
   "zona_cluster": 7,
-  "accion_recomendada": "🚨 PRIORIDAD ALTA — Despacho de Ambulancia de Soporte Vital Básico."
+  "accion_recomendada": "PRIORIDAD ALTA — Despacho de Ambulancia de Soporte Vital Básico."
 }
 ```
 
 ---
 
-## PASO 4 — Abrir el dashboard
+## Estructura
 
-1. Abre **dashboard.html** en tu navegador
-2. En el panel derecho, cambia la URL de la API si es necesario (por defecto `http://localhost:8000`)
-3. Ingresa los datos del siniestro y presiona **⚡ Calcular Riesgo**
-
----
-
-## Despliegue en la nube (opcional)
-
-### Render / Railway / Fly.io
-1. Sube todos los archivos incluyendo los `.pkl` ya generados
-2. Comando de inicio: `uvicorn api:app --host 0.0.0.0 --port $PORT`
-3. Actualiza la URL de la API en el dashboard
-
-### Google Cloud Run / AWS Lambda
-- Empaqueta en Docker con los `.pkl` incluidos
-- La imagen base `python:3.11-slim` es suficiente
-
----
-
-## Variables del Modelo (49 features)
-
-| Grupo | Variables |
-|-------|-----------|
-| Temporal | `Hora_Acc`, `Mes_Num` |
-| Operacional | `Num_Vehiculos_Involucrados` |
-| Actores (binario) | `Con_Moto`, `Con_Peaton`, `Con_Bicicleta`, `Con_Velocidad`, `Con_Embriaguez`, `Con_Carga`, `Con_Menores`, `Con_Persona_Mayor`, `Con_Rutas`, `Con_Tpi`, `Con_Tpp`, `Con_Sitp`, `Con_Troncal`, `Con_Alimentador`, `Con_Zonal`, `Con_Provisional`, `Con_Articulado`, `Con_Biarticulado`, `Con_Padron_Dual`, `Con_Servicio_Especial`, `Con_Taxi` |
-| Día (one-hot) | `Dia_Semana_Acc_jueves/lunes/martes/miércoles/sábado/viernes` |
-| Clase (one-hot) | `Clase_Acc_Caida de ocupante/Choque/Otro/Volcamiento` |
-| Cluster (one-hot) | `Zona_Riesgo_Cluster_1` ... `Zona_Riesgo_Cluster_14` |
+```
+spo-bogota/
+├── api/
+│   ├── train_model.py           ← Entrena y guarda los .pkl
+│   ├── api.py                   ← Servidor FastAPI
+│   ├── requirements.txt         ← Dependencias Python de la API
+│   ├── model.pkl                ← Modelo LightGBM (generado al entrenar)
+│   ├── kmeans.pkl               ← Clustering espacial (generado al entrenar)
+│   ├── feature_columns.pkl      ← Orden de columnas (generado al entrenar)
+│   ├── stats.json               ← Estadísticas mensuales (generado al entrenar)
+│   ├── map_data.json            ← Datos del mapa (generado al entrenar)
+│   └── cluster_stats.json       ← Estadísticas por clúster (generado al entrenar)
+├── data/
+│   └── base-anuario-de-siniestralidad.xlsx  ← (DVC) Datos SDM
+├── dashboard/
+│   ├── dashboard.html           ← Interfaz web del simulador
+│   ├── dashboard.js
+│   └── dashboard.css
+└── requirements-dev.txt         ← Dependencias de desarrollo (DVC)
+```
 
 ---
 
-## Target (variable a predecir)
+## Equipo
 
-| Valor | Clase | Descripción |
-|-------|-------|-------------|
-| 0 | Solo Daños | Solo daños materiales |
-| 1 | Con Heridos | Al menos un herido |
-| 2 | Con Muertos | Al menos una fatalidad |
+| Nombre           |
+|------------------|
+|Ariel Erráez      |
+|Delio Hoyos       |
+|Leonardo Palencia |
+|Edgar González    |
