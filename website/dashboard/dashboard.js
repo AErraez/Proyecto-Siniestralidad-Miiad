@@ -70,6 +70,34 @@ const incLayer = L.layerGroup().addTo(incidentMap);
 const clsLayer = L.layerGroup();
 let searchMarker = null;
 const layerState = { incidents: true, clusters: false };
+const incMarkers = []; // { m: CircleMarker, sev: 0|1|2 }
+let activeSev = null;  // null = all visible
+
+function incRadius(zoom) { return Math.max(3, Math.min(9, zoom - 8)); }
+incidentMap.on('zoomend', () => {
+  const r = incRadius(incidentMap.getZoom());
+  incMarkers.forEach(({ m }) => m.setRadius(r));
+});
+
+const LEG_IDS = ['leg-danos', 'leg-herido', 'leg-fatal'];
+function toggleSeverity(sev) {
+  activeSev = (activeSev === sev) ? null : sev;
+  const r = incRadius(incidentMap.getZoom());
+  incMarkers.forEach(({ m, sev: s }) => {
+    if (activeSev === null || s === activeSev) {
+      m.addTo(incLayer);
+      m.setRadius(r);
+    } else {
+      incLayer.removeLayer(m);
+    }
+  });
+  LEG_IDS.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('leg-active',   activeSev === i);
+    el.classList.toggle('leg-inactive', activeSev !== null && activeSev !== i);
+  });
+}
 
 const SEV_COLOR   = ['#2563eb', '#d97706', '#dc2626'];
 const CLS_PALETTE = [
@@ -91,20 +119,45 @@ async function loadMapData() {
     const r = await fetch(`${API_BASE}/map/data`);
     if (!r.ok) return;
     const data = await r.json();
+    const r0 = incRadius(incidentMap.getZoom());
     data.incidents.forEach(p => {
-      L.circleMarker([p.lat, p.lon], {
-        renderer, radius: 3,
+      const m = L.circleMarker([p.lat, p.lon], {
+        renderer, radius: r0,
         color: SEV_COLOR[p.severity] ?? '#64748b',
         fillColor: SEV_COLOR[p.severity] ?? '#64748b',
-        fillOpacity: 0.55, weight: 0,
+        fillOpacity: 0.65, weight: 0,
       }).addTo(incLayer);
+      incMarkers.push({ m, sev: p.severity });
     });
     data.clusters.forEach(c => {
       const col = CLS_PALETTE[c.id % CLS_PALETTE.length];
       L.circle([c.lat, c.lon], {
         radius: 1500, color: col, fillColor: col,
-        fillOpacity: 0.1, weight: 1.5, dashArray: '5,4',
-      }).bindTooltip(`Zona de riesgo ${c.id}`, { direction: 'top' }).addTo(clsLayer);
+        fillOpacity: 0.15, weight: 2, dashArray: '5,4',
+      })
+        .bindTooltip(`Zona ${c.id} — clic para ver estadísticas`, { direction: 'top', sticky: true })
+        .bindPopup(() => {
+          const s = clusterStats[String(c.id)];
+          if (!s) return `<b>Zona de riesgo ${c.id}</b><br><em>Estadísticas no disponibles</em>`;
+          return `
+            <div class="cls-popup">
+              <div class="cls-popup-title">Zona de riesgo ${c.id}</div>
+              <div class="cls-popup-row">
+                <span class="cls-label cls-fatal">Muertos</span>
+                <span class="cls-val cls-fatal">${s.fatales_6m}</span>
+              </div>
+              <div class="cls-popup-row">
+                <span class="cls-label cls-herido">Heridos</span>
+                <span class="cls-val cls-herido">${s.heridos_6m}</span>
+              </div>
+              <div class="cls-popup-row">
+                <span class="cls-label cls-total">Total accidentes</span>
+                <span class="cls-val">${s.total_6m}</span>
+              </div>
+              <div class="cls-popup-note">Últimos 6 meses · datos históricos</div>
+            </div>`;
+        }, { maxWidth: 220 })
+        .addTo(clsLayer);
     });
   } catch (e) {
     console.warn('Datos del mapa no disponibles:', e.message);

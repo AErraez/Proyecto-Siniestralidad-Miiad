@@ -204,10 +204,10 @@
                 <button class="map-ctrl-btn" id="btn-toggle-cls" onclick="toggleLayer('clusters')">Zonas de Riesgo</button>
               </div>
               <div class="d-flex gap-3 flex-wrap">
-                <span class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--c-muted)"><span class="map-dot" style="background:#dc2626"></span>Fatales</span>
-                <span class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--c-muted)"><span class="map-dot" style="background:#d97706"></span>Heridos</span>
-                <span class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--c-muted)"><span class="map-dot" style="background:#2563eb"></span>Daños</span>
-                <span class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--c-muted)"><span class="map-dot" style="background:#7c3aed"></span>Búsqueda</span>
+                <span id="leg-fatal"  class="map-legend-item" onclick="toggleSeverity(2)" title="Filtrar: solo fatales"><span class="map-dot" style="background:#dc2626"></span>Fatales</span>
+                <span id="leg-herido" class="map-legend-item" onclick="toggleSeverity(1)" title="Filtrar: solo heridos"><span class="map-dot" style="background:#d97706"></span>Heridos</span>
+                <span id="leg-danos"  class="map-legend-item" onclick="toggleSeverity(0)" title="Filtrar: solo daños"><span class="map-dot" style="background:#2563eb"></span>Daños</span>
+                <span class="map-legend-item no-filter"><span class="map-dot" style="background:#7c3aed"></span>Búsqueda</span>
               </div>
             </div>
           </div>
