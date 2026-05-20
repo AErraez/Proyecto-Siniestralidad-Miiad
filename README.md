@@ -4,7 +4,7 @@
 
 ## Problema
 
-La Secretaría de Movilidad de Bogotá (SDM) registra miles de siniestros viales al año. El tiempo de respuesta ante un accidente depende en gran medida de la capacidad del operador para estimar la severidad del evento antes de que llegue la ambulancia.
+Bogotá registra miles de siniestros viales al año. El tiempo de respuesta ante un accidente depende en gran medida de la capacidad del operador para estimar la severidad del evento antes de que llegue la ambulancia.
 
 Este proyecto proporciona un modelo de clasificación multiclase que, a partir de características del siniestro (ubicación, hora, actores involucrados, tipo de accidente), predice si el resultado será **solo daños materiales**, **con heridos** o **con muertos**, y emite una recomendación de acción operativa inmediata.
 
@@ -40,7 +40,7 @@ dvc remote add -d onedrive "C:\Users\<tu-usuario>\OneDrive - Universidad de los 
 
 ## Datos
 
-El Excel de datos SDM **no está en git** — está versionado con [DVC](https://dvc.org) y almacenado en OneDrive. Los modelos `.pkl` y JSONs generados se producen localmente al entrenar.
+El Excel de datos **no está en git** — está versionado con [DVC](https://dvc.org) y almacenado en OneDrive. Los modelos `.pkl` y JSONs generados se producen localmente al entrenar.
 
 ### Obtener el Excel por primera vez
 
@@ -123,7 +123,6 @@ mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5000
 
 Luego abrir http://localhost:5000. Seleccionar el experimento `siniestros-severidad` para comparar los runs por `recall_muertos` o `auc_muertos`.
 
-> El backend SQLite (`model/mlflow.db`) y los artefactos (`model/mlruns/`) están excluidos de git (`.gitignore`) y son locales a cada máquina.
 
 ---
 
@@ -276,7 +275,7 @@ spo-bogota/
 │   ├── map_data.json            ← Datos del mapa (generado al entrenar)
 │   └── cluster_stats.json       ← Estadísticas por clúster (generado al entrenar)
 ├── data/
-│   └── base-anuario-de-siniestralidad.xlsx  ← (DVC) Datos SDM
+│   └── base-anuario-de-siniestralidad.xlsx  ← (DVC) Datos
 ├── dashboard/
 │   ├── dashboard.html           ← Interfaz web del simulador
 │   ├── dashboard.js
