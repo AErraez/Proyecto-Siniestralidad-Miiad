@@ -380,7 +380,7 @@ function renderResult(data) {
           <strong>Protocolo de Respuesta — Con Muertos</strong>
           <div class="action-steps">
             <div class="action-step"><span class="step-num">1</span><span>Despacho inmediato de Ambulancia Medicalizada (SVA) y notificación a unidad forense.</span></div>
-            <div class="action-step"><span class="step-num">2</span><span>Activación CÓDIGO ROJO — coordinación con centro de trauma de mayor complejidad.</span></div>
+            <div class="action-step"><span class="step-num">2</span><span>Activación CÓDIGO AZUL — coordinación con centro de trauma de mayor complejidad.</span></div>
             <div class="action-step"><span class="step-num">3</span><span>Aseguramiento de la escena, preservación de evidencia y notificación a autoridades judiciales.</span></div>
           </div>
         </div>
